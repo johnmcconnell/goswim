@@ -2,7 +2,6 @@ package goswim
 
 import (
 	"bytes"
-	"fmt"
 	"math/rand"
 	"time"
 )
@@ -21,12 +20,7 @@ func (m MemberList) String() string {
 
 	for _, e := range m.Entries {
 		buffer.WriteString(
-			fmt.Sprintf(
-				"URL[%v] Status[%v] Inc[%v]\n",
-				e.URL(),
-				e.State,
-				e.IncNumber,
-			),
+			e.String() + "\n",
 		)
 	}
 

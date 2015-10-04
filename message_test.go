@@ -2,6 +2,7 @@ package goswim
 
 import (
 	"github.com/stretchr/testify/assert"
+	"net"
 	"testing"
 )
 
@@ -52,6 +53,64 @@ func TestURL(t *testing.T) {
 		"127.10.10.2:8888",
 		m.URL(),
 		"The urls match",
+	)
+}
+
+func TestBuild(t *testing.T) {
+	assert := assert.New(t)
+
+	IP := uint32(127 << 24)
+	IP += 10 << 16
+	IP += 10 << 8
+	IP += 2
+
+	M := Message{
+		State:     Alive,
+		IP:        IP,
+		Port:      3000,
+		IncNumber: 67,
+	}
+
+	URL := M.URL()
+
+	assert.Equal(
+		"127.10.10.2:3000",
+		URL,
+		"URL match",
+	)
+
+	ExpectedAddr, err := net.ResolveUDPAddr(
+		"udp",
+		URL,
+	)
+
+	assert.Nil(
+		err,
+		"no error",
+	)
+
+	Addr, err := M.UDPAddr()
+
+	assert.Nil(
+		err,
+		"no error",
+	)
+
+	assert.Equal(
+		*ExpectedAddr,
+		*Addr,
+	)
+
+	NewM := BuildMessage(
+		M.State,
+		Addr,
+		M.IncNumber,
+	)
+
+	assert.Equal(
+		M,
+		NewM,
+		"they match",
 	)
 }
 

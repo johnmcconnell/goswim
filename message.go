@@ -2,6 +2,7 @@ package goswim
 
 import (
 	"fmt"
+	"net"
 )
 
 // Membership States
@@ -19,16 +20,80 @@ type Message struct {
 	IncNumber uint32
 }
 
+// String ...
+func (m Message) String() string {
+	return fmt.Sprintf(
+		"URL[%v] Status[%v] Inc[%v]",
+		m.URL(),
+		m.State,
+		m.IncNumber,
+	)
+}
+
+// BuildMessage ...
+func BuildMessage(s uint32, addr *net.UDPAddr, i uint32) Message {
+	IPv4 := addr.IP.To4()
+
+	var IP uint32
+
+	IP += uint32(IPv4[0])
+	IP = IP << 8
+	IP += uint32(IPv4[1])
+	IP = IP << 8
+	IP += uint32(IPv4[2])
+	IP = IP << 8
+	IP += uint32(IPv4[3])
+
+	m := Message{
+		State:     s,
+		IP:        IP,
+		Port:      uint32(addr.Port),
+		IncNumber: i,
+	}
+
+	return m
+}
+
 // URL ...
 func (m Message) URL() string {
 	return fmt.Sprintf(
-		"%v.%v.%v.%v:%v",
-		m.IP>>24,
-		(m.IP>>16)&0xFF,
-		(m.IP>>8)&0xFF,
-		m.IP&0xFF,
+		"%v:%v",
+		m.IPv4S(),
 		m.Port,
 	)
+}
+
+// IPv4B ....
+func (m Message) IPv4B() (byte, byte, byte, byte) {
+	B1 := byte(m.IP >> 24)
+	B2 := byte((m.IP >> 16) & 0xFF)
+	B3 := byte((m.IP >> 8) & 0xFF)
+	B4 := byte(m.IP & 0xFF)
+
+	return B1, B2, B3, B4
+}
+
+// IPv4S ....
+func (m Message) IPv4S() string {
+	B1, B2, B3, B4 := m.IPv4B()
+
+	return fmt.Sprintf(
+		"%v.%v.%v.%v",
+		B1,
+		B2,
+		B3,
+		B4,
+	)
+}
+
+// UDPAddr ...
+func (m Message) UDPAddr() (*net.UDPAddr, error) {
+	addr, err := net.ResolveUDPAddr(
+		"udp",
+		m.URL(),
+	)
+
+	return addr, err
 }
 
 // Encoded ...
