@@ -3,6 +3,7 @@ package goswim
 import (
 	"fmt"
 	"net"
+	"strconv"
 )
 
 // Membership States
@@ -28,6 +29,41 @@ func (m Message) String() string {
 		m.State,
 		m.IncNumber,
 	)
+}
+
+// BuildMessageS ...
+func BuildMessageS(s, h, p, i string) (Message, error) {
+	Zero := Message{}
+
+	var S uint32
+
+	switch s {
+	case "Alive":
+		S = Alive
+	case "Suspected":
+		S = Suspected
+	case "Failed":
+		S = Failed
+	}
+
+	I, err := strconv.ParseUint(i, 10, 32)
+
+	if err != nil {
+		return Zero, err
+	}
+
+	URL := h + ":" + p
+
+	Addr, err := net.ResolveUDPAddr(
+		"udp",
+		URL,
+	)
+
+	if err != nil {
+		return Zero, err
+	}
+
+	return BuildMessage(S, Addr, uint32(I)), nil
 }
 
 // BuildMessage ...

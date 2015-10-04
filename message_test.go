@@ -56,6 +56,40 @@ func TestURL(t *testing.T) {
 	)
 }
 
+func TestBuildS(t *testing.T) {
+	assert := assert.New(t)
+
+	IP := uint32(127 << 24)
+	IP += 10 << 16
+	IP += 10 << 8
+	IP += 2
+
+	M := Message{
+		State:     Suspected,
+		IP:        IP,
+		Port:      3000,
+		IncNumber: 67,
+	}
+
+	NewM, err := BuildMessageS(
+		"Suspected",
+		"127.10.10.2",
+		"3000",
+		"67",
+	)
+
+	assert.Nil(
+		err,
+		"Parsed Correctly",
+	)
+
+	assert.Equal(
+		M,
+		NewM,
+		"they match",
+	)
+}
+
 func TestBuild(t *testing.T) {
 	assert := assert.New(t)
 
