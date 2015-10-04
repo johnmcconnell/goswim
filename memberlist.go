@@ -3,12 +3,16 @@ package goswim
 import (
 	"bytes"
 	"fmt"
+	"math/rand"
+	"time"
 )
 
 // MemberList ...
 type MemberList struct {
-	Entries   map[uint32]Message
-	Expecting *Message
+	Entries    map[uint32]*Message
+	Expecting  *Message
+	Suspicions map[uint32]time.Time
+	Timeout    time.Duration
 }
 
 // String ...
@@ -30,22 +34,52 @@ func (m MemberList) String() string {
 }
 
 // NewMemberList ...
-func NewMemberList(MS []Message) *MemberList {
-	Entries := make(map[uint32]Message)
+func NewMemberList(MS []Message, T time.Duration) *MemberList {
+	Entries := make(map[uint32]*Message)
 
 	for _, M := range MS {
-		Entries[M.IP] = M
+		Copy := M
+
+		Entries[M.IP] = &Copy
 	}
 
+	Suspicions := make(map[uint32]time.Time)
+
 	M := MemberList{
-		Entries: Entries,
+		Entries:    Entries,
+		Suspicions: Suspicions,
+		Timeout:    T,
 	}
 
 	return &M
 }
 
+// CheckSuspicionTimeouts ...
+func (m *MemberList) CheckSuspicionTimeouts(Now time.Time) {
+	for ID, Time := range m.Suspicions {
+		D := Now.Sub(Time)
+
+		if D > m.Timeout {
+			E := m.Entries[ID]
+			E.State = Failed
+
+			delete(m.Suspicions, ID)
+		}
+	}
+}
+
 // Awaiting ...
-func (m *MemberList) Awaiting(M Message) {
+func (m *MemberList) Awaiting(M Message, Now time.Time) {
+	m.CheckSuspicionTimeouts(Now)
+
+	// Missed the previous expecting
+	if m.Expecting != nil {
+		E := m.Entries[m.Expecting.IP]
+		E.State = Suspected
+
+		m.Suspicions[m.Expecting.IP] = Now
+	}
+
 	m.Expecting = &M
 }
 
@@ -56,6 +90,8 @@ func (m *MemberList) Received(M Message) {
 			m.Expecting = nil
 		}
 	}
+
+	m.Update(M)
 }
 
 // OutstandingAck ...
@@ -69,7 +105,28 @@ func (m *MemberList) OutstandingAck() *Message {
 
 // Select ...
 func (m *MemberList) Select(L int) []Message {
-	return nil
+	Selection := make([]Message, L)
+
+	LE := len(m.Entries)
+
+	Perm := rand.Perm(
+		LE,
+	)
+
+	ListEntries := make([]Message, LE)
+
+	I := 0
+	for _, E := range m.Entries {
+		ListEntries[I] = *E
+
+		I++
+	}
+
+	for I, P := range Perm {
+		Selection[I] = ListEntries[P]
+	}
+
+	return Selection
 }
 
 // Update ...
@@ -77,16 +134,22 @@ func (m *MemberList) Update(M Message) bool {
 	e, ok := m.Entries[M.IP]
 
 	if !ok {
-		m.Entries[M.IP] = M
+		m.Entries[M.IP] = &M
 		return true
 	}
 
-	if M.IncNumber > e.IncNumber {
+	if M.IncNumber == e.IncNumber {
 		if M.State > e.State {
-			m.Entries[M.IP] = M
+			m.Entries[M.IP] = &M
 
 			return true
 		}
+	}
+
+	if M.IncNumber > e.IncNumber {
+		m.Entries[M.IP] = &M
+
+		return true
 	}
 
 	return false

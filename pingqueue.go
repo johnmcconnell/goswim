@@ -28,7 +28,7 @@ func (p *PingQueue) Reset(m MemberList) {
 
 	i := 0
 	for _, M := range m.Entries {
-		List[i] = M
+		List[i] = *M
 
 		i++
 	}
