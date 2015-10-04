@@ -22,17 +22,18 @@ func NewPingQueue(m MemberList) *PingQueue {
 
 // Reset ...
 func (p *PingQueue) Reset(m MemberList) {
-	L := len(m.Entries)
+	var List []Message
 
-	List := make([]Message, L)
-
-	i := 0
 	for _, M := range m.Entries {
-		List[i] = *M
-
-		i++
+		if M.State != Failed {
+			List = append(
+				List,
+				*M,
+			)
+		}
 	}
 
+	L := len(List)
 	Perm := rand.Perm(L)
 
 	p.List = List
