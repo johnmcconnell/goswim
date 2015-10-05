@@ -166,6 +166,8 @@ func (m *MemberList) Update(M Message) bool {
 
 	if M.IncNumber == e.IncNumber {
 		if M.State == Alive {
+			e.State = Alive
+
 			delete(m.Suspicions, M.IP)
 		}
 	}
