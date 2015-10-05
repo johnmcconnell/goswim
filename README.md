@@ -1,2 +1,2 @@
 # goswim
-Goswim protocol and library
+SWIM protocol and library for go
