@@ -113,36 +113,49 @@ func (m *MemberList) OutstandingAck() *Message {
 
 // Select ...
 func (m *MemberList) Select(L int) []Message {
-	LE := len(m.Entries)
+	Entries := m.Entries
+
+	LE := len(Entries)
 
 	if LE < L {
 		L = LE
 	}
 
-	if LE == 0 {
+	if L == 0 {
 		return nil
 	}
 
 	Selection := make([]Message, L)
 
 	Perm := rand.Perm(
-		LE - 1,
+		LE,
 	)
 
 	ListEntries := make([]Message, LE)
 
 	I := 0
-	for _, E := range m.Entries {
-		ListEntries[I] = *E
+	for _, E := range Entries {
+		if I == LE {
+			break
+		}
 
+		ListEntries[I] = *E
 		I++
 	}
 
-	for I, P := range Perm {
-		Selection[I] = ListEntries[P]
+	for I := range Selection {
+		E := ListEntries[Perm[I]]
+		Selection[I] = E
 	}
 
 	return Selection
+}
+
+// Updates ...
+func (m *MemberList) Updates(MS ...Message) {
+	for _, M := range MS {
+		m.Update(M)
+	}
 }
 
 // Update ...

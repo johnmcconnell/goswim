@@ -128,7 +128,7 @@ func (m *InfQueue) Update(MS []Message, Now time.Time) {
 			E := InfQueueEntry{
 				Message: M,
 				Updated: Now,
-				Sent: 0,
+				Sent:    0,
 			}
 
 			m.Entries[M.ID()] = &E
