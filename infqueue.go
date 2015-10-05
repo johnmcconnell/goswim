@@ -104,9 +104,10 @@ func (m *InfQueue) Messages() []Message {
 	for i := L; i > S; i-- {
 		E := Entries[i-1]
 
-		E.Sent++
+		m.Entries[E.ID()].Sent++
+		Sent := m.Entries[E.ID()].Sent
 
-		if E.Sent < m.Decay {
+		if Sent < m.Decay {
 			Messages = append(
 				Messages,
 				E.Message,
@@ -117,6 +118,17 @@ func (m *InfQueue) Messages() []Message {
 	}
 
 	return Messages
+}
+
+// ForceUpdate ...
+func (m *InfQueue) ForceUpdate(M Message, Now time.Time) {
+	E := InfQueueEntry{
+		Message: M,
+		Updated: Now,
+		Sent:    0,
+	}
+
+	m.Entries[M.ID()] = &E
 }
 
 // Update ...

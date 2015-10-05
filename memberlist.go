@@ -101,7 +101,7 @@ func (m *MemberList) Received(M Message) {
 		}
 	}
 
-	m.Update(M)
+	m.Update(M, true)
 }
 
 // OutstandingAck ...
@@ -154,12 +154,12 @@ func (m *MemberList) Select(L int) []Message {
 // Updates ...
 func (m *MemberList) Updates(MS ...Message) {
 	for _, M := range MS {
-		m.Update(M)
+		m.Update(M, false)
 	}
 }
 
 // Update ...
-func (m *MemberList) Update(M Message) bool {
+func (m *MemberList) Update(M Message, base bool) bool {
 	e, ok := m.Entries[M.ID()]
 
 	if !ok {
@@ -183,12 +183,9 @@ func (m *MemberList) Update(M Message) bool {
 		return true
 	}
 
-	if M.IncNumber == e.IncNumber {
-		if M.State == Alive {
-			e.State = Alive
-
-			delete(m.Suspicions, M.ID())
-		}
+	if base {
+		e.State = Alive
+		delete(m.Suspicions, M.ID())
 	}
 
 	return false
