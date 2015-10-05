@@ -5,10 +5,12 @@ import (
 	"fmt"
 	"math/rand"
 	"time"
+	"sync"
 )
 
 // MemberList ...
 type MemberList struct {
+	Lock       *sync.Mutex
 	Entries    map[uint64]*Message
 	Expecting  *Message
 	Suspicions map[uint64]time.Time
@@ -57,6 +59,7 @@ func NewMemberList(MS []Message, T time.Duration) *MemberList {
 		Entries:    Entries,
 		Suspicions: Suspicions,
 		Timeout:    T,
+		Lock:       &sync.Mutex{},
 	}
 
 	return &M
@@ -64,6 +67,9 @@ func NewMemberList(MS []Message, T time.Duration) *MemberList {
 
 // CheckSuspicionTimeouts ...
 func (m *MemberList) CheckSuspicionTimeouts(Now time.Time) {
+	m.Lock.Lock()
+	defer m.Lock.Unlock()
+
 	for ID, Time := range m.Suspicions {
 		D := Now.Sub(Time)
 
@@ -80,6 +86,9 @@ func (m *MemberList) CheckSuspicionTimeouts(Now time.Time) {
 func (m *MemberList) Awaiting(M Message, Now time.Time) {
 	m.CheckSuspicionTimeouts(Now)
 
+	m.Lock.Lock()
+	defer m.Lock.Unlock()
+
 	// Missed the previous expecting
 	if m.Expecting != nil {
 		E := m.Entries[m.Expecting.ID()]
@@ -95,11 +104,15 @@ func (m *MemberList) Awaiting(M Message, Now time.Time) {
 
 // Received ...
 func (m *MemberList) Received(M Message) {
+	m.Lock.Lock()
+
 	if m.Expecting != nil {
 		if m.Expecting.IP == M.IP {
 			m.Expecting = nil
 		}
 	}
+
+	m.Lock.Unlock()
 
 	m.Update(M, true)
 }
@@ -113,6 +126,9 @@ func (m *MemberList) OutstandingAck() *Message {
 
 // Select ...
 func (m *MemberList) Select(L int) []Message {
+	m.Lock.Lock()
+	defer m.Lock.Unlock()
+
 	Entries := m.Entries
 
 	LE := len(Entries)
@@ -160,6 +176,9 @@ func (m *MemberList) Updates(MS ...Message) {
 
 // Update ...
 func (m *MemberList) Update(M Message, base bool) bool {
+	m.Lock.Lock()
+	defer m.Lock.Unlock()
+
 	e, ok := m.Entries[M.ID()]
 
 	if !ok {
