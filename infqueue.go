@@ -119,10 +119,22 @@ func (m *InfQueue) Messages() []Message {
 	return Messages
 }
 
-// UpdateMessages ...
-func (m *InfQueue) UpdateMessages(MS []Message, Now time.Time) {
+// Update ...
+func (m *InfQueue) Update(MS []Message, Now time.Time) {
 	for _, M := range MS {
-		Orig := m.Entries[M.ID()]
+		Orig, ok := m.Entries[M.ID()]
+
+		if !ok {
+			E := InfQueueEntry{
+				Message: M,
+				Updated: Now,
+				Sent: 0,
+			}
+
+			m.Entries[M.ID()] = &E
+
+			continue
+		}
 
 		AllowUpdate := Orig.Message.IncNumber > M.IncNumber
 
