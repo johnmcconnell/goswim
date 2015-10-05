@@ -2,6 +2,7 @@ package goswim
 
 import (
 	"bytes"
+	"fmt"
 	"math/rand"
 	"time"
 )
@@ -23,6 +24,17 @@ func (m MemberList) String() string {
 	for _, e := range m.Entries {
 		buffer.WriteString(
 			e.String() + "\n",
+		)
+	}
+
+	buffer.WriteString("===== SUSPICIONS =====\n")
+
+	for id := range m.Suspicions {
+		buffer.WriteString(
+			fmt.Sprintf(
+				"%v\n",
+				id,
+			),
 		)
 	}
 
@@ -71,9 +83,11 @@ func (m *MemberList) Awaiting(M Message, Now time.Time) {
 	// Missed the previous expecting
 	if m.Expecting != nil {
 		E := m.Entries[m.Expecting.IP]
-		E.State = Suspected
+		if E.State == Alive {
+			E.State = Suspected
 
-		m.Suspicions[m.Expecting.IP] = Now
+			m.Suspicions[E.IP] = Now
+		}
 	}
 
 	m.Expecting = &M
@@ -81,6 +95,8 @@ func (m *MemberList) Awaiting(M Message, Now time.Time) {
 
 // Received ...
 func (m *MemberList) Received(M Message) {
+	fmt.Println("Received:", M)
+
 	if m.Expecting != nil {
 		if m.Expecting.IP == M.IP {
 			m.Expecting = nil
@@ -93,8 +109,6 @@ func (m *MemberList) Received(M Message) {
 // OutstandingAck ...
 func (m *MemberList) OutstandingAck() *Message {
 	Message := m.Expecting
-
-	m.Expecting = nil
 
 	return Message
 }
@@ -145,7 +159,15 @@ func (m *MemberList) Update(M Message) bool {
 	if M.IncNumber > e.IncNumber {
 		m.Entries[M.IP] = &M
 
+		delete(m.Suspicions, M.IP)
+
 		return true
+	}
+
+	if M.IncNumber == e.IncNumber {
+		if M.State == Alive {
+			delete(m.Suspicions, M.IP)
+		}
 	}
 
 	return false
