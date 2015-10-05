@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"sort"
 	"time"
+	"sync"
 )
 
 // InfQueueEntries ...
@@ -12,6 +13,7 @@ type InfQueueEntries []InfQueueEntry
 
 // InfQueue ...
 type InfQueue struct {
+	Lock    *sync.Mutex
 	Entries map[uint64]*InfQueueEntry
 	Size    int
 	Decay   int
@@ -83,6 +85,7 @@ func NewInfQueue(MS []Message, size, decay int, now time.Time) *InfQueue {
 		Entries: Entries,
 		Size:    size,
 		Decay:   decay,
+		Lock: &sync.Mutex{},
 	}
 
 	return &M
@@ -90,6 +93,9 @@ func NewInfQueue(MS []Message, size, decay int, now time.Time) *InfQueue {
 
 // Messages ...
 func (m *InfQueue) Messages() []Message {
+	m.Lock.Lock()
+	defer m.Lock.Unlock()
+
 	L := len(m.Entries)
 	S := L - m.Size
 
@@ -104,10 +110,10 @@ func (m *InfQueue) Messages() []Message {
 	for i := L; i > S; i-- {
 		E := Entries[i-1]
 
-		m.Entries[E.ID()].Sent++
-		Sent := m.Entries[E.ID()].Sent
+		E2 := m.Entries[E.ID()]
+		E2.Sent++
 
-		if Sent < m.Decay {
+		if E2.Sent < m.Decay {
 			Messages = append(
 				Messages,
 				E.Message,
@@ -122,6 +128,9 @@ func (m *InfQueue) Messages() []Message {
 
 // ForceUpdate ...
 func (m *InfQueue) ForceUpdate(M Message, Now time.Time) {
+	m.Lock.Lock()
+	defer m.Lock.Unlock()
+
 	E := InfQueueEntry{
 		Message: M,
 		Updated: Now,
@@ -133,6 +142,9 @@ func (m *InfQueue) ForceUpdate(M Message, Now time.Time) {
 
 // Update ...
 func (m *InfQueue) Update(MS []Message, Now time.Time) {
+	m.Lock.Lock()
+	defer m.Lock.Unlock()
+
 	for _, M := range MS {
 		Orig, ok := m.Entries[M.ID()]
 
