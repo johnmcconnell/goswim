@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"net"
 	"strconv"
+	"strings"
 )
 
 // Membership States
@@ -23,10 +24,21 @@ type Message struct {
 
 // String ...
 func (m Message) String() string {
+	S := ""
+
+	switch m.State {
+	case Alive:
+		S = "Alive"
+	case Suspected:
+		S = "Suspected"
+	case Failed:
+		S = "Failed"
+	}
+
 	return fmt.Sprintf(
 		"URL[%v] Status[%v] Inc[%v]",
 		m.URL(),
-		m.State,
+		S,
 		m.IncNumber,
 	)
 }
@@ -88,6 +100,58 @@ func BuildMessage(s uint32, addr *net.UDPAddr, i uint32) Message {
 	}
 
 	return m
+}
+
+// BuildMessage2 ...
+func BuildMessage2(s uint32, host, port string, i uint32) (Message, error) {
+	Zero := Message{}
+
+	Port, err := strconv.ParseUint(port, 10, 32)
+
+	if err != nil {
+		return Zero, err
+	}
+
+	Subs := strings.Split(host, ".")
+	if len(Subs) != 4 {
+		return Zero, fmt.Errorf(
+			"Invalid length host[%v]",
+			host,
+		)
+	}
+
+	Part, err := strconv.Atoi(Subs[0])
+	if err != nil {
+		return Zero, err
+	}
+	IP := uint32(Part) << 24
+
+	Part, err = strconv.Atoi(Subs[1])
+	if err != nil {
+		return Zero, err
+	}
+	IP += uint32(Part) << 16
+
+	Part, err = strconv.Atoi(Subs[2])
+	if err != nil {
+		return Zero, err
+	}
+	IP += uint32(Part) << 8
+
+	Part, err = strconv.Atoi(Subs[3])
+	if err != nil {
+		return Zero, err
+	}
+	IP += uint32(Part)
+
+	m := Message{
+		State:     s,
+		IP:        IP,
+		Port:      uint32(Port),
+		IncNumber: i,
+	}
+
+	return m, nil
 }
 
 // URL ...
