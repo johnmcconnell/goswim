@@ -113,12 +113,20 @@ func (m *MemberList) OutstandingAck() *Message {
 
 // Select ...
 func (m *MemberList) Select(L int) []Message {
-	Selection := make([]Message, L)
-
 	LE := len(m.Entries)
 
+	if LE < L {
+		L = LE
+	}
+
+	if LE == 0 {
+		return nil
+	}
+
+	Selection := make([]Message, L)
+
 	Perm := rand.Perm(
-		LE,
+		LE-1,
 	)
 
 	ListEntries := make([]Message, LE)
