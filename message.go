@@ -12,6 +12,7 @@ const (
 	Alive = iota
 	Suspected
 	Failed
+	MessageSize = 16
 )
 
 // Message ...
@@ -308,7 +309,7 @@ func EncodeMessage(m Message) []byte {
 
 // DecodeMessage ...
 func DecodeMessage(BS []byte) Message {
-	if len(BS) != 16 {
+	if len(BS) < MessageSize {
 		panic(
 			fmt.Sprintf(
 				"Need 16 bytes to decode message, instead of %v",

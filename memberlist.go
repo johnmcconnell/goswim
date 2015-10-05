@@ -126,7 +126,7 @@ func (m *MemberList) Select(L int) []Message {
 	Selection := make([]Message, L)
 
 	Perm := rand.Perm(
-		LE-1,
+		LE - 1,
 	)
 
 	ListEntries := make([]Message, LE)

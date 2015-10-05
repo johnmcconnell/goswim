@@ -42,7 +42,11 @@ func (p *PingQueue) Reset(m MemberList) {
 }
 
 // NextMessage ...
-func (p *PingQueue) NextMessage(m *MemberList) Message {
+func (p *PingQueue) NextMessage(m *MemberList) *Message {
+	if len(p.List) == 0 {
+		return nil
+	}
+
 	Message := p.List[p.Perm[p.Index]]
 
 	p.Index++
@@ -51,5 +55,5 @@ func (p *PingQueue) NextMessage(m *MemberList) Message {
 		p.Reset(*m)
 	}
 
-	return Message
+	return &Message
 }
