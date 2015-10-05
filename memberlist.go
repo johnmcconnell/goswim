@@ -19,7 +19,7 @@ type MemberList struct {
 func (m MemberList) String() string {
 	var buffer bytes.Buffer
 
-	buffer.WriteString("===== MEMBERSHIP =====\n")
+	buffer.WriteString("\n===== MEMBERSHIP =====\n")
 
 	for _, e := range m.Entries {
 		buffer.WriteString(

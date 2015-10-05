@@ -163,6 +163,14 @@ func (m Message) URL() string {
 	)
 }
 
+// PortS ...
+func (m Message) PortS() string {
+	return fmt.Sprintf(
+		"%v",
+		m.Port,
+	)
+}
+
 // IPv4B ....
 func (m Message) IPv4B() (byte, byte, byte, byte) {
 	B1 := byte(m.IP >> 24)
