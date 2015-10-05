@@ -171,6 +171,14 @@ func (m Message) PortS() string {
 	)
 }
 
+// ID ...
+func (m Message) ID() uint64 {
+	ID := uint64(m.IP) << 32
+	ID += uint64(m.Port)
+
+	return ID
+}
+
 // IPv4B ....
 func (m Message) IPv4B() (byte, byte, byte, byte) {
 	B1 := byte(m.IP >> 24)

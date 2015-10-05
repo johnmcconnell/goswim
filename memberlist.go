@@ -9,9 +9,9 @@ import (
 
 // MemberList ...
 type MemberList struct {
-	Entries    map[uint32]*Message
+	Entries    map[uint64]*Message
 	Expecting  *Message
-	Suspicions map[uint32]time.Time
+	Suspicions map[uint64]time.Time
 	Timeout    time.Duration
 }
 
@@ -43,15 +43,15 @@ func (m MemberList) String() string {
 
 // NewMemberList ...
 func NewMemberList(MS []Message, T time.Duration) *MemberList {
-	Entries := make(map[uint32]*Message)
+	Entries := make(map[uint64]*Message)
 
 	for _, M := range MS {
 		Copy := M
 
-		Entries[M.IP] = &Copy
+		Entries[M.ID()] = &Copy
 	}
 
-	Suspicions := make(map[uint32]time.Time)
+	Suspicions := make(map[uint64]time.Time)
 
 	M := MemberList{
 		Entries:    Entries,
@@ -82,11 +82,11 @@ func (m *MemberList) Awaiting(M Message, Now time.Time) {
 
 	// Missed the previous expecting
 	if m.Expecting != nil {
-		E := m.Entries[m.Expecting.IP]
+		E := m.Entries[m.Expecting.ID()]
 		if E.State == Alive {
 			E.State = Suspected
 
-			m.Suspicions[E.IP] = Now
+			m.Suspicions[E.ID()] = Now
 		}
 	}
 
@@ -95,8 +95,6 @@ func (m *MemberList) Awaiting(M Message, Now time.Time) {
 
 // Received ...
 func (m *MemberList) Received(M Message) {
-	fmt.Println("Received:", M)
-
 	if m.Expecting != nil {
 		if m.Expecting.IP == M.IP {
 			m.Expecting = nil
@@ -141,25 +139,25 @@ func (m *MemberList) Select(L int) []Message {
 
 // Update ...
 func (m *MemberList) Update(M Message) bool {
-	e, ok := m.Entries[M.IP]
+	e, ok := m.Entries[M.ID()]
 
 	if !ok {
-		m.Entries[M.IP] = &M
+		m.Entries[M.ID()] = &M
 		return true
 	}
 
 	if M.IncNumber == e.IncNumber {
 		if M.State > e.State {
-			m.Entries[M.IP] = &M
+			m.Entries[M.ID()] = &M
 
 			return true
 		}
 	}
 
 	if M.IncNumber > e.IncNumber {
-		m.Entries[M.IP] = &M
+		m.Entries[M.ID()] = &M
 
-		delete(m.Suspicions, M.IP)
+		delete(m.Suspicions, M.ID())
 
 		return true
 	}
@@ -168,7 +166,7 @@ func (m *MemberList) Update(M Message) bool {
 		if M.State == Alive {
 			e.State = Alive
 
-			delete(m.Suspicions, M.IP)
+			delete(m.Suspicions, M.ID())
 		}
 	}
 

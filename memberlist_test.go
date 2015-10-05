@@ -144,7 +144,7 @@ func TestSWIMSuspicion(t *testing.T) {
 
 	assert.EqualValues(
 		Suspected,
-		List.Entries[MS[0].IP].State,
+		List.Entries[MS[0].ID()].State,
 		"Now suspected",
 	)
 
@@ -163,7 +163,7 @@ func TestSWIMSuspicion(t *testing.T) {
 
 	assert.EqualValues(
 		Failed,
-		List.Entries[MS[0].IP].State,
+		List.Entries[MS[0].ID()].State,
 		"Now failed",
 	)
 
@@ -173,7 +173,7 @@ func TestSWIMSuspicion(t *testing.T) {
 
 	assert.EqualValues(
 		Failed,
-		List.Entries[MS[0].IP].State,
+		List.Entries[MS[0].ID()].State,
 		"Failed because no update to incarnation number",
 	)
 
@@ -186,7 +186,7 @@ func TestSWIMSuspicion(t *testing.T) {
 
 	assert.EqualValues(
 		Alive,
-		List.Entries[MS[0].IP].State,
+		List.Entries[MS[0].ID()].State,
 		"Now alive",
 	)
 }
