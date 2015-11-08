@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"math/rand"
 	"time"
+	"net"
 	"sync"
 )
 
@@ -172,6 +173,49 @@ func (m *MemberList) Updates(MS ...Message) {
 	for _, M := range MS {
 		m.Update(M, false)
 	}
+}
+
+// Includes ...
+func (m MemberList) Includes(Addr string) bool {
+	M, err := DummyMessage(Addr)
+
+	if err != nil {
+		return false
+	}
+
+	fmt.Println(
+		"URL: ",
+		M.URL(),
+	)
+
+	E, ok := m.Entries[M.ID()]
+
+	if !ok {
+		return false
+	}
+
+	return E.State != Failed
+}
+
+func DummyMessage(URL string) (Message, error) {
+	Zero := Message{}
+
+	Addr, err := net.ResolveUDPAddr(
+		"udp",
+		URL,
+	)
+
+	if err != nil {
+		return Zero, err
+	}
+
+	M := BuildMessage(
+		Alive,
+		Addr,
+		0,
+	)
+
+	return M, nil
 }
 
 // Update ...
