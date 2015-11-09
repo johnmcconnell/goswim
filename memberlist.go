@@ -67,9 +67,11 @@ func NewMemberList(MS []Message, T time.Duration) *MemberList {
 }
 
 // CheckSuspicionTimeouts ...
-func (m *MemberList) CheckSuspicionTimeouts(Now time.Time) {
+func (m *MemberList) CheckSuspicionTimeouts(Now time.Time) []uint64 {
 	m.Lock.Lock()
 	defer m.Lock.Unlock()
+
+	var Failures []uint64
 
 	for ID, Time := range m.Suspicions {
 		D := Now.Sub(Time)
@@ -78,14 +80,21 @@ func (m *MemberList) CheckSuspicionTimeouts(Now time.Time) {
 			E := m.Entries[ID]
 			E.State = Failed
 
+			Failures = append(
+				Failures,
+				ID,
+			)
+
 			delete(m.Suspicions, ID)
 		}
 	}
+
+	return Failures
 }
 
 // Awaiting ...
-func (m *MemberList) Awaiting(M Message, Now time.Time) {
-	m.CheckSuspicionTimeouts(Now)
+func (m *MemberList) Awaiting(M Message, Now time.Time) []uint64 {
+	Failures := m.CheckSuspicionTimeouts(Now)
 
 	m.Lock.Lock()
 	defer m.Lock.Unlock()
@@ -101,6 +110,8 @@ func (m *MemberList) Awaiting(M Message, Now time.Time) {
 	}
 
 	m.Expecting = &M
+
+	return Failures
 }
 
 // Received ...
