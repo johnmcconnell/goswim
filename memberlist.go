@@ -18,6 +18,22 @@ type MemberList struct {
 	Timeout    time.Duration
 }
 
+// AliveMembers ...
+func (m MemberList) AliveMembers() []Message {
+	var Members []Message
+
+	for _, e := range m.Entries {
+		if e.State != Failed {
+			Members = append(
+				Members,
+				*e,
+			)
+		}
+	}
+
+	return Members
+}
+
 // String ...
 func (m MemberList) String() string {
 	var buffer bytes.Buffer
