@@ -196,10 +196,19 @@ func (m *MemberList) Select(L int) []Message {
 }
 
 // Updates ...
-func (m *MemberList) Updates(MS ...Message) {
+func (m *MemberList) Updates(MS ...Message) []uint64 {
+	var IDs []uint64
+
 	for _, M := range MS {
-		m.Update(M, false)
+		if m.Update(M, false) {
+			IDs = append(
+				IDs,
+				M.ID(),
+			)
+		}
 	}
+
+	return IDs
 }
 
 // Includes ...
@@ -261,7 +270,7 @@ func (m *MemberList) Update(M Message, base bool) bool {
 		if M.State > e.State {
 			m.Entries[M.ID()] = &M
 
-			return true
+			return false
 		}
 	}
 
@@ -277,6 +286,7 @@ func (m *MemberList) Update(M Message, base bool) bool {
 		e.State = Alive
 		delete(m.Suspicions, M.ID())
 	}
+
 
 	return false
 }
